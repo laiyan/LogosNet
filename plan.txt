@@ -1,3 +1,6 @@
+Lai Yan Yung
+11/1/2017
+
 This assingment is simply implementing a basic chatroom.
 It can accept maximum 255 participants. If the chatroom is full, the client will 
 receive a message that the server is full, then the client will be disconnected.

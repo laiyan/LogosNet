@@ -1,0 +1,27 @@
+This assingment is simply implementing a basic chatroom.
+It can accept maximum 255 participants. If the chatroom is full, the client will 
+receive a message that the server is full, then the client will be disconnected.
+When client connects to a non-full server, it will prompt the user to provide a 
+unique username, which can not be longer than 10 characters and whitespace is
+not accepted. If the username provided is invalid. it will prompt the user to 
+provide a new username. If the user does provide the username within 60 seconds, 
+the connection will be closed on the particpant. After receiving a valid username, 
+the user will become an active participant and he can send a message up to 1000
+characters at any time. Also a message about the user has joined will be send to 
+all participant in the chatroom. If the user left the chatroom, a message about 
+who has left will be send to all users in the chatroom. This chatroom will handle 
+two different types of mesaages:public message and private message. For private
+message, user need to use "@ username", which the username is the intended 
+recipient. If the message doesn't start with @ then it is a public message.
+Public message will be showed to all the participants in the chatroom and private
+message will be only seen by the sender and intended receipient.
+
+I think the hardest part will be handling public and private message.  Also this 
+time the clients can leave anytime as they want, it may be also difficult to 
+make sure that the server knows there is someone left and allowed other new 
+clients to join.
+
+Three resources that I plan to user:
+Office hour
+Lecture Slide
+Online 

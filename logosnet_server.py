@@ -1,6 +1,5 @@
 import argparse
 import socket               # Import socket module
-import os#  Low level modules for threading and handling signals
 import signal
 import struct
 

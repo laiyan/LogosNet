@@ -3,6 +3,18 @@ import socket               # Import socket module
 import signal
 import struct
 import collections
+import threading
+
+def broadcast_data (sock, message):
+    #Do not send the message to master socket and the client who has send us the message
+    for socket in CONNECTION_LIST:
+        if socket != server_socket and socket != sock :
+            try :
+                socket.send(message)
+            except :
+                # broken socket connection may be, chat client pressed ctrl+c for example
+                socket.close()
+                CONNECTION_LIST.remove(socket)
 
 #object Participant
 class Participant(object):
@@ -33,18 +45,6 @@ def checkDuplicate():
             return 1
     return 1
 
-#username method
-def get_username():
-    '''for inputing the username and check duplicate'''
-    inputName = input("Enter username, max 10 chars: ")
-    while len(inputName) > 10 or " " in inputName:
-        inputName = input("Enter username, max 10 chars: ")
-    print(inputName)
-    return inputName
-
-#check username exist or not
-
-
 
 # server socket setup and connection
 S = socket.socket(socket.AF_INET, socket.SOCK_STREAM)         # Create a socket object
@@ -52,8 +52,59 @@ HOST = ARGS.ip
 PORT = ARGS.port               # Reserve a PORT for your service.
 S.bind((HOST, PORT))
 S.listen(5)                 # Now wait for client connection.
+print('Server', socket.gethostbyname('localhost'), 'listening ...')
+
+mydict = dict()
+mylist = list()
+
+#把whatToSay传给除了exceptNum的所有人
+def tellOthers(exceptNum, whatToSay):
+    for c in mylist:
+        if c.fileno() != exceptNum :
+            try:
+                c.send(whatToSay.encode())
+            except:
+                pass
+
+def subThreadIn(myconnection, connNumber):
+    nickname = myconnection.recv(1024).decode()
+    mydict[myconnection.fileno()] = nickname
+    mylist.append(myconnection)
+    print('connection', connNumber, ' has nickname :', nickname)
+    tellOthers(connNumber, '【'+mydict[connNumber]+' enter chatroom】')
+    while True:
+        try:
+            recvedMsg = myconnection.recv(1024).decode()
+            if recvedMsg:
+                print(mydict[connNumber], ':', recvedMsg)
+                tellOthers(connNumber, mydict[connNumber]+' :'+recvedMsg)
+
+        except (OSError, ConnectionResetError):
+            try:
+                mylist.remove(myconnection)
+            except:
+                pass
+            print(mydict[connNumber], 'exit, ', len(mylist), ' person left')
+            tellOthers(connNumber, '【'+mydict[connNumber]+' left chatroom】')
+            myconnection.close()
+            return
+
 while True:
-    get_username()
-    C, ADDR = S.accept()     # Establish connection with client. This where server waits
-    C.close()                # Close the connection
-S.close()
+    connection, addr = S.accept()
+    print('Accept a new connection', connection.getsockname(), connection.fileno())
+    try:
+        #connection.settimeout(5)
+        buf = connection.recv(1024).decode()
+        if buf == '1':
+            connection.send(b'welcome to server!')
+
+            #为当前连接开辟一个新的线程
+            mythread = threading.Thread(target=subThreadIn, args=(connection, connection.fileno()))
+            mythread.setDaemon(True)
+            mythread.start()
+
+        else:
+            connection.send(b'please go out!')
+            connection.close()
+    except :
+        pass

@@ -16,15 +16,6 @@ HOST = ARGS.host
 server = ChatServer(PORT. HOST)
 server.run()
 
-#username method
-def get_username():
-    '''for inputing the username.'''
-    inputusername = input("Enter username, max 10 chars: ")
-    while len(inputusername) > 10 or " " in inputusername:
-        inputusername = input("Enter username, max 10 chars: ")
-    print(inputusername)
-    return inputusername
-
 class ChatServer(object):
     def __init__(self, port,host, backlog=5):
         self.clients = 0    #客户端数量

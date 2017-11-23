@@ -12,7 +12,7 @@ PARSER.add_argument("--port", type=int, metavar='p', help="port number")
 PARSER.add_argument("--ip", metavar='i', help="IP address for client")
 ARGS = PARSER.parse_args()
 PORT = ARGS.port
-HOST = ARGS.host
+HOST = ARGS.ip
 server = ChatServer(PORT. HOST)
 server.run()
 

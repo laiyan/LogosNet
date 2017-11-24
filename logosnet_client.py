@@ -4,18 +4,6 @@ import signal
 import struct
 import time
 
-#username method
-def get_username():
-    '''for inputing the username and check duplicate'''
-    inputName = input("Enter username, max 10 chars: ")
-    while len(inputName) > 10 or " " in inputName:
-        inputName = input("Enter username, max 10 chars: ")
-    print(inputName)
-    return inputName
-
-#argument parsing
-
-
 class ChatClient(object):
     def __init__(self, port, host):
         self.name = " " #客户端名称

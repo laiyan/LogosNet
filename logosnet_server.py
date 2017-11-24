@@ -5,7 +5,7 @@ import signal
 import struct
 import collections
 import sys
-import select 
+import select
 
 class ChatServer(object):
     def __init__(self, port,host, backlog=5):
@@ -37,6 +37,10 @@ class ChatServer(object):
     #     info = self.clientmap[client] #info的内容如：(('127.0.0.1', 56354), 'MyClient')
     #     host,name = info[0][0],info[1]
     #     return "@".join((name,host))  #返回内容如：MyClient@127.0.0.1
+    def sd(c, s):
+        c.send(struct.pack(">i",len(s)))
+        c.send(s.encode('utf-8'))
+
 
     def run(self):
         inputs = [self.server, sys.stdin]
@@ -58,21 +62,27 @@ class ChatServer(object):
             for sock in readable:
                 #判断当前触发的是不是服务端对象, 当触发的对象是服务端对象时,说明有新客户端连接进来了
                 #如果是服务器套接字被触发（监听到有客户端连接服务器）
-                if sock == self.server & self.clients < 6:
+                if sock == self.server:
                     client,address = self.server.accept()
+                    if self.clients < 6:
+                        sd(client,"a")
+                        cname = client.recv(10)
+                        # check duplicate
+                        # if not send("v")
+                        # else send("i")
+                        self.clients += 1 #客户端数量加1
+                        client.send("CLIENT: "+str(address[0]))
+                        inputs.append(client)  #将客户端对象也加入到监听的列表中, 当客户端发送消息时 select 将触发
+                        self.clientmap[client] = (address, cname) #客户端映射
+
+                        #向其它客户端发送广播消息
+                        msg = "\n(Connected: New client (%d) from %s)" % (self.clients, self.get_client_name(client))
+                        for output in self.outputs:
+                            output.send(msg)
+                        self.outputs.append(client)
+                    else:
+                        client.send('f')
                     # print "Chat server: got connection %d from %s" % (client.fileno(), address)
-                    cname = client.recv(64).split("NAME: ")[1]
-                    self.clients += 1 #客户端数量加1
-                    client.send("CLIENT: "+str(address[0]))
-                    inputs.append(client)  #将客户端对象也加入到监听的列表中, 当客户端发送消息时 select 将触发
-                    self.clientmap[client] = (address, cname) #客户端映射
-
-                    #向其它客户端发送广播消息
-                    msg = "\n(Connected: New client (%d) from %s)" % (self.clients, self.get_client_name(client))
-                    for output in self.outputs:
-                        output.send(msg)
-                    self.outputs.append(client)
-
                 elif sock == sys.stdin: #如果是标准输入就发送广播消息
                     junk = sys.stdin.readline().strip()
                     if junk == "exit" or junk=="quit":

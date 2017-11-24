@@ -4,17 +4,8 @@ import os#  Low level modules for threading and handling signals
 import signal
 import struct
 import collections
-
-#argument parsing
-PARSER = argparse.ArgumentParser(
-    description='LogosNet Server, the server version for the primitive networked chat program')
-PARSER.add_argument("--port", type=int, metavar='p', help="port number")
-PARSER.add_argument("--ip", metavar='i', help="IP address for client")
-ARGS = PARSER.parse_args()
-PORT = ARGS.port
-HOST = ARGS.ip
-server = ChatServer(PORT. HOST)
-server.run()
+import sys
+import select 
 
 class ChatServer(object):
     def __init__(self, port,host, backlog=5):
@@ -57,10 +48,10 @@ class ChatServer(object):
                 #select函数阻塞进程，直到inputs中的套接字被触发（在此例中，套接字接收到客户端发来的握手信号，从而变得可读，满足select函数的“可读”条件），readable返回被触发的套接字（服务器套接字）
                 #当再次运行此处时，select再次阻塞进程，同时监听服务器套接字和获得的客户端套接字
                 readable,writeable,exceptional = select.select(inputs, self.outputs, [])
-            except select.error, e:
-                print "Socket error: %s" % str(e)
+            except select.error:
+                print ("Socket error")
             except Exception as e:
-                print "Other exception: %s" % str(e)
+                print ("Other exception: %s" % str(e))
                 break
 
             #循环判断是否有客户端连接进来,当有客户端连接进来时select将触发
@@ -70,7 +61,6 @@ class ChatServer(object):
                 if sock == self.server & self.clients < 6:
                     client,address = self.server.accept()
                     # print "Chat server: got connection %d from %s" % (client.fileno(), address)
-
                     cname = client.recv(64).split("NAME: ")[1]
                     self.clients += 1 #客户端数量加1
                     client.send("CLIENT: "+str(address[0]))
@@ -104,7 +94,7 @@ class ChatServer(object):
                                     output.send(msg)
                         else:
                             #客户端退出，断开连接
-                            print "Chat server: %d hung up" % sock.fileno()
+                            print ("Chat server: %d hung up" % sock.fileno())
                             self.clients -= 1
                             sock.close()
                             inputs.remove(sock) #客户端断开连接了，将客户端的监听从inputs列表中移
@@ -113,13 +103,23 @@ class ChatServer(object):
                             msg = "\n(Now hung up: Client from %s)" % self.get_client_name(sock)
                             for output in self.outputs:
                                 output.send(msg)
-                    except socket.error, e:
+                    except socket.error:
                         inputs.remove(sock)
                         self.outputs.remove(sock)
-                        print "Socket error: %s" % str(e)
+                        print ("Socket error")
                     except Exception as e:
                         inputs.remove(sock)
                         self.outputs.remove(sock)
-                        print "Other exception: %s" % str(e)
+                        print ("Other exception: %s" % str(e))
 
         self.server.close()
+#argument parsing
+PARSER = argparse.ArgumentParser(
+    description='LogosNet Server, the server version for the primitive networked chat program')
+PARSER.add_argument("--port", type=int, metavar='p', help="port number")
+PARSER.add_argument("--ip", metavar='i', help="IP address for client")
+ARGS = PARSER.parse_args()
+PORT = ARGS.port
+HOST = ARGS.ip
+server = ChatServer(PORT, HOST)
+server.run()

@@ -2,6 +2,8 @@ import argparse
 import select
 import socket
 import sys
+import signal
+import struct
 
 #argument parsing
 PARSER = argparse.ArgumentParser(
@@ -19,6 +21,13 @@ server.listen(5)
 inputs = [server]
 outputs = []
 clients = 0
+buf = {}
+
+    #中断信号处理方法
+def sighandler(signum, frame):
+    for output in outputs:
+        output.close()
+    server.close()
 
 while inputs:
     readable, writable, exceptional = select.select(inputs, outputs, inputs)
@@ -29,7 +38,8 @@ while inputs:
                 inputs.append(c)
                 print("added in inputs")
                 c.send('a'.encode('utf-8'))
-                clients = clients + 1 
+                clients = clients + 1
+                buf[s.fileno()] = ""
             else:
                 c.send('f'.encode('utf-8'))
         else:
@@ -42,6 +52,20 @@ while inputs:
                     s.send('v'.encode('utf-8'))
                     clients = clients + 1
                     outputs.append(s)
+                    for output in outputs:
+                        if output != s:
+                            output.send(("User " + username+ " has joined").encode('utf-8'))
+                    
             else:
                 #active participant
-                #data = s.recv()
+                data = s.recv(2)
+                if len(buf[s.fileno()]) > 4 bytes
+                    header = 
+                    struct.pack(">i",header)
+                         if(buf[s.fileno()].len - 4 = value in header)
+                                send the friggin message
+                                del 
+                         
+                else
+                       
+                

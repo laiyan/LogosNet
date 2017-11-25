@@ -17,11 +17,13 @@ TIMEOUT = 60
 client = socket.socket()
 client.connect((HOST,PORT))
 print("connect")
+
 check = client.recv(4)
 print("received")
 
 def interrupted(signum, frame):
     print("Timeout! Bye")
+    client.close()
 signal.signal(signal.SIGALRM, interrupted)
 
 if check.decode('utf-8') == 'a':
@@ -38,9 +40,27 @@ if check.decode('utf-8') == 'a':
     if check.decode('utf-8') == 'v':
         connect = True    
     while connect:
-        sys.stdout.write(">" + name + ": ")
-        sys.stdout.flush()
-        data = sys.stdin.readline().strip()
+        try:
+            sys.stdout.write(">" + name + ": ")
+            sys.stdout.flush()
+            readable, writeable,exceptional = select.select([0, client], [], [])
+            for s in readable:
+                if s == client:
+                    data = s.recv(1024)
+                    print(data.decode('utf-8'))
+                else:            
+                    sys.stdout.write(">" + name + ": ")
+                    sys.stdout.flush()
+                    data = sys.stdin.readline().strip()
+                    if len(data) < 1000:
+                        client.send(data.encode('utf-8'))
+                    if data == "exit()":
+                        client.close()
+                        break
+        except KeyboardInterrupt:
+            print("Client interruped. ")
+            client.close()
+            break
 else:
     print("Chat room is full, please try again later.")
     client.close()

@@ -25,8 +25,11 @@ check = client.recv(4)
 print("received")
 
 def interrupted(signum, frame):
-    print("Timeout! Bye")
+    connect = False
     client.close()
+    print("Timeout! Bye")
+    sys.exit(1)
+
 signal.signal(signal.SIGALRM, interrupted)
 
 if check.decode('utf-8') == 'a':

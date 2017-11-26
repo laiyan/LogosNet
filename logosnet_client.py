@@ -1,3 +1,4 @@
+'''client for chatroom'''
 import argparse
 import select
 import socket
@@ -14,82 +15,83 @@ PORT = ARGS.port
 HOST = ARGS.ip
 
 TIMEOUT = 60
-buf = {}
+BUF = {}
 
 def send(connection, message):
+    '''send function'''
     header = len(message)
     connection.send(struct.pack(">i", header))
     connection.send(message.encode('utf-8'))
 
 def recv(connection):
-    buf[connection.fileno()] = connection.recv(2)
-    buf[connection.fileno()] += connection.recv(2)
-    if buf[connection.fileno()]:
-        header = int.from_bytes(buf[connection.fileno()], byteorder='big')
+    '''recv function, recv by 2 bytes'''
+    BUF[connection.fileno()] = connection.recv(2)
+    BUF[connection.fileno()] += connection.recv(2)
+    if BUF[connection.fileno()]:
+        header = int.from_bytes(BUF[connection.fileno()], byteorder='big')
         if header%2 == 1:
             header = int(header/2) + 1
         else:
             header = int(header/2)
         for i in range(0, header):
-            buf[connection.fileno()] += connection.recv(2)
-        print(buf[connection.fileno()].decode('utf-8')[4:])
-        del buf[connection.fileno()]
+            BUF[connection.fileno()] += connection.recv(2)
+        print(BUF[connection.fileno()].decode('utf-8')[4:])
+        del BUF[connection.fileno()]
     else:
         print("Disconnected from chat server")
         connection.close()
-    
 
-client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client.connect((HOST,PORT))
+C = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+C.connect((HOST, PORT))
 print("connect")
 
-checklen = client.recv(4)
-checklen = int.from_bytes(checklen,byteorder = 'big')
-check = client.recv(checklen)
+CHECKLEN = C.recv(4)
+CHECKLEN = int.from_bytes(CHECKLEN, byteorder='big')
+CHECK = C.recv(CHECKLEN)
 print("received")
 
 def interrupted(signum, frame):
-    connect = False
-    client.close()
+    '''If exceed 60s'''
+    C.close()
     print("Timeout! Bye")
     sys.exit(1)
 
 signal.signal(signal.SIGALRM, interrupted)
 
-if check.decode('utf-8') == 'a':
-    while check.decode('utf-8') != 'v':
+if CHECK.decode('utf-8') == 'a':
+    while CHECK.decode('utf-8') != 'v':
         signal.alarm(TIMEOUT)
         sys.stdout.write("Enter username, max 10 chars: ")
         sys.stdout.flush()
         name = sys.stdin.readline().strip()
         # disable the alarm after success
         signal.alarm(0)
-        client.send(name.encode('utf-8'))
-        checklen = client.recv(4)
-        checklen = int.from_bytes(checklen,byteorder = 'big')
-        check = client.recv(checklen)
-        print(check)
-    if check.decode('utf-8') == 'v':
-        connect = True   
-    while connect:
+        C.send(name.encode('utf-8'))
+        CHECKLEN = C.recv(4)
+        CHECKLEN = int.from_bytes(CHECKLEN, byteorder='big')
+        CHECK = C.recv(CHECKLEN)
+        print(CHECK)
+    if CHECK.decode('utf-8') == 'v':
+        CONNECT = True
+    while CONNECT:
         try:
             sys.stdout.write("> " + name + ": ")
-            sys.stdout.flush() 
-            readable, writeable,exceptional = select.select([0, client], [], [])
-            for s in readable:
-                if s == client:
+            sys.stdout.flush()
+            R, W, E = select.select([0, C], [], [])
+            for s in R:
+                if s == C:
                     recv(s)
-                else:            
+                else:
                     data = sys.stdin.readline().strip()
                     if len(data) < 1000:
-                        send(client,data)
+                        send(C, data)
                     if data == "exit()":
-                        client.close()
+                        C.close()
                         break
         except KeyboardInterrupt:
-            print("Client interruped. ")
-            client.close()
+            print("C interruped. ")
+            C.close()
             break
 else:
     print("Chat room is full, please try again later.")
-    client.close()
+    C.close()

@@ -16,25 +16,24 @@ HOST = ARGS.ip
 TIMEOUT = 60
 buf = {}
 
-def send(connection,message):
+def send(connection, message):
     header = len(message)
-    connection.send(struct.pack(">i",header))
+    connection.send(struct.pack(">i", header))
     connection.send(message.encode('utf-8'))
 
 def recv(connection):
     buf[connection.fileno()] = connection.recv(2)
     buf[connection.fileno()] += connection.recv(2)
     if buf[connection.fileno()]:
-        header = int.from_bytes(buf[connection.fileno()],byteorder='big')
+        header = int.from_bytes(buf[connection.fileno()], byteorder='big')
         if header%2 == 1:
             header = int(header/2) + 1
         else:
-            header = int (header/2)
-        for i in range(0,header):
+            header = int(header/2)
+        for i in range(0, header):
             buf[connection.fileno()] += connection.recv(2)
         print(buf[connection.fileno()].decode('utf-8')[4:])
         del buf[connection.fileno()]
-                        #sys.stdout.flush()
     else:
         print("Disconnected from chat server")
         connection.close()
@@ -83,10 +82,7 @@ if check.decode('utf-8') == 'a':
                 else:            
                     data = sys.stdin.readline().strip()
                     if len(data) < 1000:
-                        #client.send(struct.pack(">i",len(data)))
-                        #client.send(data.encode('utf-8'))
                         send(client,data)
-                        #print("sent")
                     if data == "exit()":
                         client.close()
                         break

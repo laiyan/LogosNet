@@ -35,7 +35,7 @@ while inputs:
     for s in readable:
         if s == server:
             c,addr = server.accept()
-            if clients < 5:
+            if clients < 255:
                 inputs.append(c)
                 print("added in inputs")
                 c.send('a'.encode('utf-8'))

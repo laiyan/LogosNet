@@ -14,7 +14,7 @@ ARGS = PARSER.parse_args()
 PORT = ARGS.port
 HOST = ARGS.ip
 
-TIMEOUT = 60
+TIMEOUT = 5
 BUF = {}
 
 def send(connection, message):
@@ -50,27 +50,41 @@ CHECKLEN = int.from_bytes(CHECKLEN, byteorder='big')
 CHECK = C.recv(CHECKLEN)
 print("received")
 
-def interrupted(signum, frame):
+def interrupted (signum, frame):
     '''If exceed 60s'''
-    C.close()
-    print("Timeout! Bye")
-    sys.exit(1)
+    #C.close()
+    print("Time out!")
+    raise Execption("Time Out Exception")
+    #sys.exit(1)
 
 signal.signal(signal.SIGALRM, interrupted)
 
+
 if CHECK.decode('utf-8') == 'a':
     while CHECK.decode('utf-8') != 'v':
-        signal.alarm(TIMEOUT)
-        sys.stdout.write("Enter username, max 10 chars: ")
-        sys.stdout.flush()
-        name = sys.stdin.readline().strip()
-        # disable the alarm after success
-        signal.alarm(0)
-        C.send(name.encode('utf-8'))
-        CHECKLEN = C.recv(4)
-        CHECKLEN = int.from_bytes(CHECKLEN, byteorder='big')
-        CHECK = C.recv(CHECKLEN)
-        print(CHECK)
+        try:
+            signal.alarm(TIMEOUT)
+            sys.stdout.write("Enter username, max 10 chars: ")
+            sys.stdout.flush()
+            name = sys.stdin.readline().strip()
+            # disable the alarm after success
+            signal.alarm(0)
+            print("sending in username")
+            C.send(name.encode('utf-8'))
+            CHECKLEN = C.recv(4)
+            CHECKLEN = int.from_bytes(CHECKLEN, byteorder='big')
+            CHECK = C.recv(CHECKLEN)
+            print(CHECK)
+        except KeyboardInterrupt:
+            print("C interruped. ")
+            C.close()
+            CONNECT = False
+            break
+        except Exception as e:
+            print("Other exception")
+            C.close()
+            CONNECT = False
+            break
     if CHECK.decode('utf-8') == 'v':
         CONNECT = True
     while CONNECT:

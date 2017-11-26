@@ -50,11 +50,11 @@ CHECKLEN = int.from_bytes(CHECKLEN, byteorder='big')
 CHECK = C.recv(CHECKLEN)
 print("received")
 
-def interrupted (signum, frame):
+def interrupted(signum, frame):
     '''If exceed 60s'''
     #C.close()
     print("Time out!")
-    raise Execption("Time Out Exception")
+    raise Exception("Time Out Exception")
     #sys.exit(1)
 
 signal.signal(signal.SIGALRM, interrupted)
@@ -80,7 +80,7 @@ if CHECK.decode('utf-8') == 'a':
             C.close()
             CONNECT = False
             break
-        except Exception as e:
+        except Exception:
             print("Other exception")
             C.close()
             CONNECT = False

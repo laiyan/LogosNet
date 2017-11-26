@@ -3,6 +3,7 @@ import select
 import socket
 import sys
 import signal
+import struct
 
 PARSER = argparse.ArgumentParser(
     description='LogosNet Server, the server version for the primitive networked chat program')
@@ -13,8 +14,10 @@ PORT = ARGS.port
 HOST = ARGS.ip
 
 TIMEOUT = 60
+buf = {}
 
-client = socket.socket()
+
+client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client.connect((HOST,PORT))
 print("connect")
 
@@ -38,22 +41,36 @@ if check.decode('utf-8') == 'a':
         check = client.recv(4)
         print(check)
     if check.decode('utf-8') == 'v':
-        connect = True    
+        connect = True   
     while connect:
         try:
-            sys.stdout.write(">" + name + ": ")
-            sys.stdout.flush()
+            sys.stdout.write("> " + name + ": ")
+            sys.stdout.flush() 
             readable, writeable,exceptional = select.select([0, client], [], [])
             for s in readable:
                 if s == client:
-                    data = s.recv(1024)
-                    print(data.decode('utf-8'))
+                    buf[s.fileno()] = s.recv(2)
+                    buf[s.fileno()] += s.recv(2)
+                    if buf[s.fileno()]:
+                        header = int.from_bytes(buf[s.fileno()],byteorder='big')
+                        if header%2 == 1:
+                            header = int(header/2) + 1
+                        else:
+                            header = int (header/2)
+                        for i in range(0,header):
+                            buf[s.fileno()] += s.recv(2)
+                        print(buf[s.fileno()].decode('utf-8')[4:])
+                        del buf[s.fileno()]
+                        #sys.stdout.flush()
+                    else:
+                        print("Disconnected from chat server")
+                        client.close()
                 else:            
-                    sys.stdout.write(">" + name + ": ")
-                    sys.stdout.flush()
                     data = sys.stdin.readline().strip()
                     if len(data) < 1000:
+                        client.send(struct.pack(">i",len(data)))
                         client.send(data.encode('utf-8'))
+                        #print("sent")
                     if data == "exit()":
                         client.close()
                         break

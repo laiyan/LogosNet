@@ -25,6 +25,11 @@ clients = 0
 buf = {}
 names = {}
 
+def send(connection,message):
+    header = len(message)
+    connection.send(struct.pack(">i",header))
+    connection.send(message.encode('utf-8'))
+
 def sighandler(signum, frame):
     for output in outputs:
         output.close()
@@ -35,22 +40,23 @@ while inputs:
     for s in readable:
         if s == server:
             c,addr = server.accept()
-            if clients < 255:
+            if clients < 5:
                 inputs.append(c)
                 print("added in inputs")
-                c.send('a'.encode('utf-8'))
+                send(c,'a')
                 clients = clients + 1
                 #print(buf[s.fileno()])
             else:
-                c.send('f'.encode('utf-8'))
+                send(c,'f')
         else:   
             if s not in outputs:
                 username = s.recv(16).decode('utf-8')
                 print("received username")
                 if len(username) > 10 or " " in username or username in names.values():
-                    s.send('i'.encode('utf-8'))
+                    send(s,'i')
                 else:
-                    s.send('v'.encode('utf-8'))
+                    send(s,'v')
+                    print("sent valid")
                     clients = clients + 1
                     names[s.fileno()] = username
                     outputs.append(s)
@@ -115,6 +121,12 @@ while inputs:
                     if s in outputs:
                         outputs.remove(s)
                     inputs.remove(s)
+                    name = names[s.fileno()]                 
+                    for output in outputs:
+                        msg = "\rUser " + username+ " has left"
+                            #output.send(struct.pack(">i",len(msg)))
+                        h = len(msg)
+                        output.send(struct.pack(">i",h)+(msg.encode('utf-8')))                   
                     del names[s.fileno()]
                     del buf[s.fileno()]
                     clients = clients - 1

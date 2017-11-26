@@ -14,7 +14,7 @@ ARGS = PARSER.parse_args()
 PORT = ARGS.port
 HOST = ARGS.ip
 
-TIMEOUT = 5
+TIMEOUT = 60
 BUF = {}
 
 def send(connection, message):

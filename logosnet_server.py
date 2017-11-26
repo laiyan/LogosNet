@@ -39,7 +39,7 @@ while inputs:
     for s in readable:
         if s == server:
             c,addr = server.accept()
-            if len(names) < 5:
+            if len(names) < 255:
                 inputs.append(c)
                 print("added in inputs")
                 send(c,'a')

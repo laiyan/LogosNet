@@ -21,7 +21,6 @@ server.listen(5)
 
 inputs = [server]
 outputs = []
-clients = 0
 buf = {}
 names = {}
 
@@ -40,12 +39,10 @@ while inputs:
     for s in readable:
         if s == server:
             c,addr = server.accept()
-            if clients < 5:
+            if len(names) < 5:
                 inputs.append(c)
                 print("added in inputs")
                 send(c,'a')
-                clients = clients + 1
-                #print(buf[s.fileno()])
             else:
                 send(c,'f')
         else:   
@@ -67,12 +64,7 @@ while inputs:
                             h = len(msg)
                             output.send(struct.pack(">i",h)+(msg.encode('utf-8')))                   
             else:
-                #This part is for clients already added to outputs
-                #active participant
-                #h = struct.unpack('>i',data)
-                #print(h)
                 print(buf.keys())
-                #if s.fileno() not in buf.keys():
                 buf[s.fileno()] = s.recv(2)
                 buf[s.fileno()] += s.recv(2)
                 if buf[s.fileno()]:
@@ -116,28 +108,17 @@ while inputs:
                                 m = buf[s.fileno()].decode('utf-8')[4:]
                                 o.send(struct.pack(">i",h) + n.encode('utf-8') + m.encode('utf-8'))
                     del buf[s.fileno()]
-                    #break
                 else:
                     if s in outputs:
                         outputs.remove(s)
                     inputs.remove(s)
                     name = names[s.fileno()]                 
                     for output in outputs:
-                        msg = "\rUser " + username+ " has left"
+                        msg = "\rUser " + name + " has left"
                             #output.send(struct.pack(">i",len(msg)))
                         h = len(msg)
                         output.send(struct.pack(">i",h)+(msg.encode('utf-8')))                   
                     del names[s.fileno()]
                     del buf[s.fileno()]
-                    clients = clients - 1
                     s.close()
                     print (s.fileno())
-                    
-                #    if len(buf[s.fileno()]) - 4 == header:
-                 #       print(buf[s.fileno()])
-                  #      for o in outputs:
-                   #         if output != s:
-                    #            o.send(buf[s.fileno()])
-                     #   del bufbuf[s.fileno()]
-                   # else:
-                    #    buf[s.fileno()]+= s.recv(2)

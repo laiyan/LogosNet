@@ -5,6 +5,7 @@ import sys
 import signal
 import struct
 import collections
+import sandr
 
 #argument parsing
 PARSER = argparse.ArgumentParser(
@@ -23,11 +24,7 @@ inputs = [server]
 outputs = []
 buf = {}
 names = {}
-
-def send(connection,message):
-    header = len(message)
-    connection.send(struct.pack(">i",header))
-    connection.send(message.encode('utf-8'))
+tempNames={}
 
 while inputs:
     readable, writable, exceptional = select.select(inputs, outputs, inputs)
@@ -38,34 +35,59 @@ while inputs:
                 if len(names) <= 255:
                     inputs.append(c)
                     #print("added in inputs")
-                    send(c,"accepted")
+                    sandr.send(c,"accepted")
                 else:
-                    send(c,"full")
+                    sandr.send(c,"full")
             else:   
                 if s not in outputs:
                     #inputs.remove(s)
                     #print(s)
-                    username = s.recv(16).decode('utf-8')
-                    if len(username) == 0:
-                        #print("client left")
-                        inputs.remove(s)
-                        raise Exception("Time Out Exception")
-                    #print("received username")
-                    if len(username) > 10 or " " in username:
-                        send(s,"username-invalid")
-                    elif username in names.values():
-                        send(s,"username-alreadyinuse")
+                    print("in S")
+                    if s.fileno() in tempNames.keys():
+                        tempLength = len(tempNames[s.fileno()])
+                        if tempLength>4:
+                            tempTup = struct.unpack(">i " + str(tempLength-4) +"s", tempNames[s.fileno()])
+                            print("Printing Tuple")
+                            print(tempTup[0])
+                            if tempLength != tempTup[0]:
+                                temp = sandr.recv(s)
+                                print("in deep if")
+                                print(temp)                                
+                                tempNames[s.fileno()] += temp
+                                if len(tempNames[s.fileno()])-4 == tempTup[0]:
+                                    print("in here bla")
+                                    username = str(tempTup[1]+temp,'utf-8')
+                                    if len(username) > 10 or " " in username:
+                                        sandr.send(s,"username-invalid")
+                                    elif username in names.values():
+                                        sandr.send(s,"username-alreadyinuse")
+                                    else:
+                                        sandr.send(s,"username-valid")
+                                        #print("sent valid")
+                                        names[s.fileno()] = username
+                                        #inputs.append(s)
+                                        outputs.append(s)
+                                    for output in outputs:
+                                        msg = "\rUser " + username + " has joined"
+                                        #output.send(struct.pack(">i",len(msg)))
+                                        h = len(msg)
+                                        output.send(struct.pack(">i",h)+(msg.encode('utf-8')))                                                                                            
+                        else:
+                            print("in here")
+                            temp = sandr.recv(s)
+                            print(temp)
+                            tempNames[s.fileno()] += temp
                     else:
-                        send(s,"username-valid")
-                        #print("sent valid")
-                        names[s.fileno()] = username
-                        #inputs.append(s)
-                        outputs.append(s)
-                        for output in outputs:
-                            msg = "\rUser " + username + " has joined"
-                                #output.send(struct.pack(">i",len(msg)))
-                            h = len(msg)
-                            output.send(struct.pack(">i",h)+(msg.encode('utf-8')))                   
+                        temp = sandr.recv(s)
+                        print("In temp")
+                        print(temp)
+                        if len(temp) > 0:
+                            tempNames[s.fileno()] = temp
+                        else:
+                            inputs.remove(s)
+                            print("about to throw excpt")
+                            raise Exception("Time Out Exception")
+                                       
                 else:
                     #print(buf.keys())
                     buf[s.fileno()] = s.recv(2)
@@ -127,4 +149,5 @@ while inputs:
                         #print (s.fileno())
         except Exception as e:
             print("Other exception")
+            print(e)
 

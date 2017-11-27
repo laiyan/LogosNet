@@ -25,55 +25,51 @@ def send(connection, message):
 
 def recv(connection):
     '''recv function, recv by 2 bytes'''
-    BUF[connection.fileno()] = connection.recv(2)
-    BUF[connection.fileno()] += connection.recv(2)
-    if BUF[connection.fileno()]:
-        header = int.from_bytes(BUF[connection.fileno()], byteorder='big')
+    msg = connection.recv(2)
+    msg += connection.recv(2)
+    if msg:
+        header = int.from_bytes(msg, byteorder='big')
         if header%2 == 1:
             header = int(header/2) + 1
         else:
             header = int(header/2)
         for i in range(0, header):
-            BUF[connection.fileno()] += connection.recv(2)
-        print(BUF[connection.fileno()].decode('utf-8')[4:])
-        del BUF[connection.fileno()]
-    else:
-        print("Disconnected from chat server")
-        connection.close()
+            msg += connection.recv(2)
+    return msg
 
 C = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 C.connect((HOST, PORT))
 #print("connect")
 
-CHECKLEN = C.recv(4)
-CHECKLEN = int.from_bytes(CHECKLEN, byteorder='big')
-CHECK = C.recv(CHECKLEN)
+#CHECKLEN = C.recv(4)
+#CHECKLEN = int.from_bytes(CHECKLEN, byteorder='big')
+#CHECK = C.recv(CHECKLEN)
 #print("received")
-
+CHECK = recv(C)
+CHECK = CHECK[4:]
+print(CHECK)
 def interrupted(signum, frame):
     '''If exceed 60s'''
-    #C.close()
     print("Time out!")
     raise Exception("Time Out Exception")
-    #sys.exit(1)
 
 signal.signal(signal.SIGALRM, interrupted)
 
 
-if CHECK.decode('utf-8') == 'a':
-    while CHECK.decode('utf-8') != 'v':
+if CHECK.decode('utf-8') == "accepted":
+    while CHECK.decode('utf-8') != "username-valid":
         try:
             signal.alarm(TIMEOUT)
             sys.stdout.write("Enter username, max 10 chars: ")
             sys.stdout.flush()
+            if CHECK.decode('utf-8') == "username-alreadyinuse":
+                signal.alarm(0)
             name = sys.stdin.readline().strip()
             # disable the alarm after success
-            signal.alarm(0)
             #print("sending in username")
             C.send(name.encode('utf-8'))
-            CHECKLEN = C.recv(4)
-            CHECKLEN = int.from_bytes(CHECKLEN, byteorder='big')
-            CHECK = C.recv(CHECKLEN)
+            CHECK = recv(C)
+            CHECK = CHECK[4:]
             #print(CHECK)
         except KeyboardInterrupt:
             print("C interruped. ")
@@ -85,7 +81,7 @@ if CHECK.decode('utf-8') == 'a':
             C.close()
             CONNECT = False
             break
-    if CHECK.decode('utf-8') == 'v':
+    if CHECK.decode('utf-8') == "username-valid":
         CONNECT = True
     while CONNECT:
         try:
@@ -94,7 +90,13 @@ if CHECK.decode('utf-8') == 'a':
             R, W, E = select.select([0, C], [], [])
             for s in R:
                 if s == C:
-                    recv(s)
+                    data = recv(s)
+                    if data:
+                        print(data.decode('utf-8')[4:])
+                        del data
+                    else:
+                        print("Disconnected from chat server")
+                        s.close()
                 else:
                     data = sys.stdin.readline().strip()
                     if len(data) < 1000:

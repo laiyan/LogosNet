@@ -39,15 +39,11 @@ def recv(connection):
 
 C = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 C.connect((HOST, PORT))
-#print("connect")
 
-#CHECKLEN = C.recv(4)
-#CHECKLEN = int.from_bytes(CHECKLEN, byteorder='big')
-#CHECK = C.recv(CHECKLEN)
-#print("received")
 CHECK = recv(C)
 CHECK = CHECK[4:]
-print(CHECK)
+
+
 def interrupted(signum, frame):
     '''If exceed 60s'''
     print("Time out!")
@@ -65,8 +61,8 @@ if CHECK.decode('utf-8') == "accepted":
             if CHECK.decode('utf-8') == "username-alreadyinuse":
                 signal.alarm(0)
             name = sys.stdin.readline().strip()
+            signal.alarm(0)
             # disable the alarm after success
-            #print("sending in username")
             C.send(name.encode('utf-8'))
             CHECK = recv(C)
             CHECK = CHECK[4:]

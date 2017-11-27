@@ -43,12 +43,12 @@ def recv(connection):
 
 C = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 C.connect((HOST, PORT))
-print("connect")
+#print("connect")
 
 CHECKLEN = C.recv(4)
 CHECKLEN = int.from_bytes(CHECKLEN, byteorder='big')
 CHECK = C.recv(CHECKLEN)
-print("received")
+#print("received")
 
 def interrupted(signum, frame):
     '''If exceed 60s'''
@@ -69,12 +69,12 @@ if CHECK.decode('utf-8') == 'a':
             name = sys.stdin.readline().strip()
             # disable the alarm after success
             signal.alarm(0)
-            print("sending in username")
+            #print("sending in username")
             C.send(name.encode('utf-8'))
             CHECKLEN = C.recv(4)
             CHECKLEN = int.from_bytes(CHECKLEN, byteorder='big')
             CHECK = C.recv(CHECKLEN)
-            print(CHECK)
+            #print(CHECK)
         except KeyboardInterrupt:
             print("C interruped. ")
             C.close()

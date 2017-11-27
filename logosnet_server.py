@@ -60,11 +60,10 @@ while inputs:
                         #inputs.append(s)
                         outputs.append(s)
                         for output in outputs:
-                            if output != s:
-                                msg = "\rUser " + username+ " has joined"
+                            msg = "\rUser " + username + " has joined"
                                 #output.send(struct.pack(">i",len(msg)))
-                                h = len(msg)
-                                output.send(struct.pack(">i",h)+(msg.encode('utf-8')))                   
+                            h = len(msg)
+                            output.send(struct.pack(">i",h)+(msg.encode('utf-8')))                   
                 else:
                     #print(buf.keys())
                     buf[s.fileno()] = s.recv(2)

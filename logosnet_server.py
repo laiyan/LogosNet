@@ -38,9 +38,9 @@ while inputs:
                 if len(names) <= 255:
                     inputs.append(c)
                     #print("added in inputs")
-                    send(c,'a')
+                    send(c,"accepted")
                 else:
-                    send(c,'f')
+                    send(c,"full")
             else:   
                 if s not in outputs:
                     #inputs.remove(s)
@@ -51,10 +51,12 @@ while inputs:
                         inputs.remove(s)
                         raise Exception("Time Out Exception")
                     #print("received username")
-                    if len(username) > 10 or " " in username or username in names.values():
-                        send(s,'i')
+                    if len(username) > 10 or " " in username:
+                        send(s,"username-invalid")
+                    elif username in names.values():
+                        send(s,"username-alreadyinuse")
                     else:
-                        send(s,'v')
+                        send(s,"username-valid")
                         #print("sent valid")
                         names[s.fileno()] = username
                         #inputs.append(s)

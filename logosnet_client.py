@@ -59,7 +59,8 @@ if CHECK.decode('utf-8') == "accepted":
             sys.stdout.write("Enter username, max 10 chars: ")
             sys.stdout.flush()
             if CHECK.decode('utf-8') == "username-alreadyinuse":
-                signal.alarm(0)
+                print("\ralready in use")
+                signal.alarm(TIMEOUT)
             name = sys.stdin.readline().strip()
             signal.alarm(0)
             # disable the alarm after success

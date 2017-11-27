@@ -31,37 +31,31 @@ def send(connection,message):
 
 while inputs:
     readable, writable, exceptional = select.select(inputs, outputs, inputs)
-    for s in exceptional:
-        inputs.remove(s)
-        #readable.remove(s)
-        if s in outputs:
-            outputs.remove(s)
-        s.close()
     for s in readable:
         try:
             if s == server:
                 c,addr = server.accept()
-                if len(names) < 255:
+                if len(names) <= 255:
                     inputs.append(c)
-                    print("added in inputs")
+                    #print("added in inputs")
                     send(c,'a')
                 else:
                     send(c,'f')
             else:   
                 if s not in outputs:
                     #inputs.remove(s)
-                    print(s)
+                    #print(s)
                     username = s.recv(16).decode('utf-8')
                     if len(username) == 0:
-                        print("client leaved")
+                        #print("client left")
                         inputs.remove(s)
                         raise Exception("Time Out Exception")
-                    print("received username")
+                    #print("received username")
                     if len(username) > 10 or " " in username or username in names.values():
                         send(s,'i')
                     else:
                         send(s,'v')
-                        print("sent valid")
+                        #print("sent valid")
                         names[s.fileno()] = username
                         #inputs.append(s)
                         outputs.append(s)
@@ -72,7 +66,7 @@ while inputs:
                                 h = len(msg)
                                 output.send(struct.pack(">i",h)+(msg.encode('utf-8')))                   
                 else:
-                    print(buf.keys())
+                    #print(buf.keys())
                     buf[s.fileno()] = s.recv(2)
                     buf[s.fileno()] += s.recv(2)
                     if buf[s.fileno()]:
@@ -108,7 +102,7 @@ while inputs:
                         else:    
                             for o in outputs:
                                 if o.fileno() != s.fileno():
-                                    print(struct.pack(">i",len(buf[s.fileno()])-4))
+                                    #print(struct.pack(">i",len(buf[s.fileno()])-4))
                                     #o.send(struct.pack(">i",len(buf[s.fileno()])-4))
                                     n = "\r> "+names[s.fileno()]+": "
                                     h = len(buf[s.fileno()])-4 + len(n)
@@ -129,7 +123,7 @@ while inputs:
                         del names[s.fileno()]
                         del buf[s.fileno()]
                         s.close()
-                        print (s.fileno())
+                        #print (s.fileno())
         except Exception as e:
             print("Other exception")
 

@@ -20,8 +20,10 @@ BUF = {}
 def send(connection, message):
     '''send function'''
     header = len(message)
-    connection.send(struct.pack(">i", header))
-    connection.send(message.encode('utf-8'))
+    print("header is: ")
+    print(header)
+    connection.send(struct.pack(">i "+str(header)+"s", header, bytes(message,'utf-8')))
+    #connection.send(message.encode('utf-8'))
 
 def recv(connection):
     '''recv function, recv by 2 bytes'''
@@ -64,7 +66,8 @@ if CHECK.decode('utf-8') == "accepted":
             name = sys.stdin.readline().strip()
             signal.alarm(0)
             # disable the alarm after success
-            C.send(name.encode('utf-8'))
+            print(struct.pack(">i " + str(len(name))+"s", len(name), bytes(name, 'utf-8')))      
+            send(C, name)
             CHECK = recv(C)
             CHECK = CHECK[4:]
             #print(CHECK)
@@ -73,8 +76,9 @@ if CHECK.decode('utf-8') == "accepted":
             C.close()
             CONNECT = False
             break
-        except Exception:
+        except Exception as e:
             print("Other exception")
+            print(str(e))            
             C.close()
             CONNECT = False
             break

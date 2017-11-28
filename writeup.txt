@@ -28,3 +28,10 @@ is not good.
 I open serveral clients and tried to connect them to the server, sent private 
 message and public. Also exit by typing exit() and ctrl c. Also wait 60s and see
 client will exit or not after the time out.
+
+I think the most challenging part is the recv(2), as it takes me time to truely
+understand the concept of it. And the same function need to work for both client
+and server. Also it can only have one recv(2) and cannot use any blocking function
+so it is not easy to do. The whole concept is relying on select, so when there is 
+event, will trigger the recv process. Also need to use dictionary to keep track 
+on the receiving. 

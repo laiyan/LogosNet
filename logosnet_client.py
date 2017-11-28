@@ -70,7 +70,7 @@ if CHECK.decode('utf-8') == "accepted":
             break
         except Exception as e:
             print("Other exception")
-            print(str(e))            
+            print(str(e))       
             C.close()
             CONNECT = False
             break

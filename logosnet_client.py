@@ -5,7 +5,7 @@ import socket
 import sys
 import signal
 import struct
-
+import sandr
 PARSER = argparse.ArgumentParser(
     description='LogosNet Server, the server version for the primitive networked chat program')
 PARSER.add_argument("--port", type=int, metavar='p', help="port number")
@@ -16,14 +16,6 @@ HOST = ARGS.ip
 
 TIMEOUT = 60
 BUF = {}
-
-def send(connection, message):
-    '''send function'''
-    header = len(message)
-    print("header is: ")
-    print(header)
-    connection.send(struct.pack(">i "+str(header)+"s", header, bytes(message,'utf-8')))
-    #connection.send(message.encode('utf-8'))
 
 def recv(connection):
     '''recv function, recv by 2 bytes'''
@@ -67,7 +59,7 @@ if CHECK.decode('utf-8') == "accepted":
             signal.alarm(0)
             # disable the alarm after success
             print(struct.pack(">i " + str(len(name))+"s", len(name), bytes(name, 'utf-8')))      
-            send(C, name)
+            sandr.send(C, name)
             CHECK = recv(C)
             CHECK = CHECK[4:]
             #print(CHECK)
@@ -101,7 +93,7 @@ if CHECK.decode('utf-8') == "accepted":
                 else:
                     data = sys.stdin.readline().strip()
                     if len(data) < 1000:
-                        send(C, data)
+                        sandr.send(C, data)
                     if data == "exit()":
                         C.close()
                         break

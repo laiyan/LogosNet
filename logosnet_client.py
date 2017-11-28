@@ -55,11 +55,11 @@ if CHECK.decode('utf-8') == "accepted":
             if CHECK.decode('utf-8') == "username-alreadyinuse":
                 print("\ralready in use")
                 signal.alarm(TIMEOUT)
-            name = sys.stdin.readline().strip()
+            NAME = sys.stdin.readline().strip()
             signal.alarm(0)
             # disable the alarm after success
-            print(struct.pack(">i " + str(len(name))+"s", len(name), bytes(name, 'utf-8')))      
-            sandr.send(C, name)
+            print(struct.pack(">i " + str(len(NAME))+"s", len(NAME), bytes(NAME, 'utf-8'))
+            sandr.send(C, NAME)
             CHECK = recv(C)
             CHECK = CHECK[4:]
             #print(CHECK)
@@ -70,7 +70,7 @@ if CHECK.decode('utf-8') == "accepted":
             break
         except Exception as e:
             print("Other exception")
-            print(str(e))       
+            print(str(e))
             C.close()
             CONNECT = False
             break
@@ -104,3 +104,4 @@ if CHECK.decode('utf-8') == "accepted":
 else:
     print("Chat room is full, please try again later.")
     C.close()
+    

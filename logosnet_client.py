@@ -58,7 +58,7 @@ if CHECK.decode('utf-8') == "accepted":
             NAME = sys.stdin.readline().strip()
             signal.alarm(0)
             # disable the alarm after success
-            print(struct.pack(">i " + str(len(NAME))+"s", len(NAME), bytes(NAME, 'utf-8'))
+            print(struct.pack(">i " + str(len(NAME))+"s", len(NAME), bytes(NAME, 'utf-8')))
             sandr.send(C, NAME)
             CHECK = recv(C)
             CHECK = CHECK[4:]
@@ -78,7 +78,7 @@ if CHECK.decode('utf-8') == "accepted":
         CONNECT = True
     while CONNECT:
         try:
-            sys.stdout.write("> " + name + ": ")
+            sys.stdout.write("> " + NAME + ": ")
             sys.stdout.flush()
             R, W, E = select.select([0, C], [], [])
             for s in R:
@@ -104,4 +104,3 @@ if CHECK.decode('utf-8') == "accepted":
 else:
     print("Chat room is full, please try again later.")
     C.close()
-    

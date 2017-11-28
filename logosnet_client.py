@@ -58,7 +58,7 @@ if CHECK.decode('utf-8') == "accepted":
             NAME = sys.stdin.readline().strip()
             signal.alarm(0)
             # disable the alarm after success
-            print(struct.pack(">i " + str(len(NAME))+"s", len(NAME), bytes(NAME, 'utf-8')))
+            #print(struct.pack(">i " + str(len(NAME))+"s", len(NAME), bytes(NAME, 'utf-8')))
             sandr.send(C, NAME)
             CHECK = recv(C)
             CHECK = CHECK[4:]

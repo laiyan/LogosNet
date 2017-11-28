@@ -1,7 +1,7 @@
 import socket
 import struct
 
-def recv(conn,buf):
+def recv(conn, buf):
     temp = conn.recv(2)
     if conn.fileno() not in buf.keys():
         buf[conn.fileno()] = temp

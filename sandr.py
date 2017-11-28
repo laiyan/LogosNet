@@ -3,6 +3,7 @@ import struct
 
 def recv(conn,buf):
     temp = conn.recv(2)
+    print(temp)
     if conn.fileno() not in buf.keys():
         buf[conn.fileno()] = temp
         return None
@@ -16,7 +17,8 @@ def recv(conn,buf):
                 print(buf[conn.fileno()])               
                 if len(buf[conn.fileno()])-4 == tempTup[0]:
                     message = str(tempTup[1]+temp,'utf-8')
-                    #del buf[conn.fileno()]
+                    buf[conn.fileno()] = ""
+                    print(buf[conn.fileno()])
                     return message
                 else:
                     return None

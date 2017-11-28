@@ -1,10 +1,7 @@
+'''server for the chat room'''
 import argparse
 import select
 import socket
-import sys
-import signal
-import struct
-import collections
 import sandr
 
 #argument parsing
@@ -16,86 +13,85 @@ ARGS = PARSER.parse_args()
 PORT = ARGS.port
 HOST = ARGS.ip
 
-server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server.bind((HOST,PORT))
-server.listen(5)
+S = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+S.bind((HOST, PORT))
+S.listen(5)
 
-inputs = [server]
-outputs = []
+INPUTS = [S]
+OUTPUTS = []
 buf = {}
 names = {}
-tempNames={}
+tempNames = {}
 
-while inputs:
-    readable, writable, exceptional = select.select(inputs, outputs, inputs)
-    for s in readable:
+while INPUTS:
+    READABLE, WRITEABLE, EXCEPTIONAL = select.select(INPUTS, OUTPUTS, INPUTS)
+    for s in READABLE:
         try:
-            if s == server:
-                c,addr = server.accept()
+            if s == S:
+                c, addr = S.accept()
                 if len(names) <= 255:
-                    inputs.append(c)
-                    #print("added in inputs")
-                    sandr.send(c,"accepted")
+                    INPUTS.append(c)
+                    #print("added in INPUTS")
+                    sandr.send(c, "accepted")
                 else:
-                    sandr.send(c,"full")
-            else:   
-                if s not in outputs:
-                    #inputs.remove(s)
+                    sandr.send(c, "full")
+            else:
+                if s not in OUTPUTS:
+                    #INPUTS.remove(s)
                     #print(s)
                     #print("in S")
-                    username = sandr.recv(s,tempNames)
+                    username = sandr.recv(s, tempNames)
                     if username != None:
                         print(username)
                         if len(username) > 10 or " " in username:
-                            sandr.send(s,"username-invalid")
+                            sandr.send(s, "username-invalid")
                             del tempNames[s.fileno()]
                         elif username in names.values():
-                            sandr.send(s,"username-alreadyinuse")
+                            sandr.send(s, "username-alreadyinuse")
                             del tempNames[s.fileno()]
                         else:
-                            sandr.send(s,"username-valid")
+                            sandr.send(s, "username-valid")
                             names[s.fileno()] = username
                             del tempNames[s.fileno()]
-                            outputs.append(s)
-                            for output in outputs:
+                            OUTPUTS.append(s)
+                            for output in OUTPUTS:
                                 msg = "\rUser " + username + " has joined"
                                 h = len(msg)
-                                sandr.send(output,msg)
+                                sandr.send(output, msg)
                     elif username == "":
-                        inputs.remove(s)
+                        INPUTS.remove(s)
                         print("about to throw excpt")
                         raise Exception("Time Out Exception")
-                                       
                 else:
                     byte = b''
-                    messages = sandr.recv(s,buf)
+                    messages = sandr.recv(s, buf)
                     if messages != None:
                         print(messages)
                         m = messages.split()
                         if m[0][0] == '@':
-                            if len(m) == 2: 
+                            if len(m) == 2:
                                 targetName = m[0][1:]
                                 if targetName in names.values():
-                                    for o in outputs:
+                                    for o in OUTPUTS:
                                         if names[o.fileno()] == targetName:
                                             n = "\r> "+names[s.fileno()]+": "
-                                            sandr.send(o,n+m[1])
+                                            sandr.send(o, n+m[1])
                         #else broadcast
-                        else:    
-                            for o in outputs:
+                        else:
+                            for o in OUTPUTS:
                                 if o.fileno() != s.fileno():
                                     print("inside here")
                                     n = "\r> "+names[s.fileno()]+": "
-                                    sandr.send(o,n+messages)
+                                    sandr.send(o, n+messages)
                         del buf[s.fileno()]
-                    elif message = b'':
-                        if s in outputs:
-                            outputs.remove(s)
-                        inputs.remove(s)
-                        name = names[s.fileno()]                 
-                        for output in outputs:
+                    elif message == b'':
+                        if s in OUTPUTS:
+                            OUTPUTS.remove(s)
+                        INPUTS.remove(s)
+                        name = names[s.fileno()]
+                        for output in OUTPUTS:
                             m = "\rUser " + name + " has left"
-                            sandr.send(o,m+messages)                   
+                            sandr.send(o, m+messages)
                         del names[s.fileno()]
                         del buf[s.fileno()]
                         s.close()

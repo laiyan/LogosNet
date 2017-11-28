@@ -67,63 +67,39 @@ while inputs:
                         raise Exception("Time Out Exception")
                                        
                 else:
-                    #print(buf.keys())
-                    buf[s.fileno()] = s.recv(2)
-                    buf[s.fileno()] += s.recv(2)
-                    if buf[s.fileno()]:
-                        header = struct.unpack('>i',buf[s.fileno()])[0]                    
-                        #print (header)
-                        fmt = ">I " + str(header) + "s"
-                        if header%2 == 1:
-                            header = int(header/2) + 1
-                        else:
-                            header = int (header/2)
-                        for i in range(0,header):
-                            buf[s.fileno()] += s.recv(2)
-                                           
-                        temp = struct.unpack(fmt, buf[s.fileno()])
-                        #print (temp)
-                        #if private message do this
-                        messages = str(temp[1], 'utf-8').split()
-                        #print("yes: "+messages[0])
-                        #print("yes yes: "+ messages[0][0])
-                        if(messages[0][0] == '@'):
-                            if len(messages) == 2: 
-                                targetName = messages[0][1:]
+                    byte = b''
+                    messages = sandr.recv(s,buf)
+                    if messages != None:
+                        print(messages)
+                        m = messages.split()
+                        if m[0][0] == '@':
+                            if len(m) == 2: 
+                                targetName = m[0][1:]
                                 if targetName in names.values():
                                     for o in outputs:
                                         if names[o.fileno()] == targetName:
                                             n = "\r> "+names[s.fileno()]+": "
-                                            h = temp[0] + len (n)
-                                            #print("yeah" + str(h))                                       
-                                            #print( type(n))
-                                            #print(type(messages[1]))
-                                            o.send(struct.pack(">i "+ str(h) + "s",h,bytes(n+messages[1], 'utf-8')))
+                                            sandr.send(o,n+m[1])
                         #else broadcast
                         else:    
                             for o in outputs:
                                 if o.fileno() != s.fileno():
-                                    #print(struct.pack(">i",len(buf[s.fileno()])-4))
-                                    #o.send(struct.pack(">i",len(buf[s.fileno()])-4))
+                                    print("inside here")
                                     n = "\r> "+names[s.fileno()]+": "
-                                    h = len(buf[s.fileno()])-4 + len(n)
-                                    #print(type(buf[s.fileno()]))
-                                    m = buf[s.fileno()].decode('utf-8')[4:]
-                                    o.send(struct.pack(">i",h) + n.encode('utf-8') + m.encode('utf-8'))
+                                    sandr.send(o,n+messages)
                         del buf[s.fileno()]
-                    else:
+                    elif message = b'':
                         if s in outputs:
                             outputs.remove(s)
                         inputs.remove(s)
                         name = names[s.fileno()]                 
                         for output in outputs:
-                            msg = "\rUser " + name + " has left"
-                                #output.send(struct.pack(">i",len(msg)))
-                            h = len(msg)
-                            output.send(struct.pack(">i",h)+(msg.encode('utf-8')))                   
+                            m = "\rUser " + name + " has left"
+                            sandr.send(o,m+messages)                   
                         del names[s.fileno()]
                         del buf[s.fileno()]
                         s.close()
+
                         #print (s.fileno())
         except Exception as e:
             print("Other exception")

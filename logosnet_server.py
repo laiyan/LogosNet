@@ -36,13 +36,10 @@ while INPUTS:
                 else:
                     sandr.send(c, "full")
             else:
+                #if client is accepted but not yet being active participant
                 if s not in OUTPUTS:
-                    #INPUTS.remove(s)
-                    #print(s)
-                    #print("in S")
                     username = sandr.recv(s, tempNames)
                     if username != None:
-                        print(username)
                         if len(username) > 10 or " " in username:
                             sandr.send(s, "username-invalid")
                             del tempNames[s.fileno()]
@@ -58,6 +55,7 @@ while INPUTS:
                                 msg = "\rUser " + username + " has joined"
                                 h = len(msg)
                                 sandr.send(output, msg)
+                    #timeout of client exit
                     elif username == "":
                         INPUTS.remove(s)
                         print("about to throw excpt")
@@ -65,8 +63,9 @@ while INPUTS:
                 else:
                     byte = b''
                     messages = sandr.recv(s, buf)
+                    #message recv
                     if messages != None:
-                        print(messages)
+                        #private message
                         m = messages.split()
                         if m[0][0] == '@':
                             if len(m) == 2:
@@ -80,7 +79,6 @@ while INPUTS:
                         else:
                             for o in OUTPUTS:
                                 if o.fileno() != s.fileno():
-                                    print("inside here")
                                     n = "\r> "+names[s.fileno()]+": "
                                     sandr.send(o, n+messages)
                         del buf[s.fileno()]
@@ -95,8 +93,6 @@ while INPUTS:
                         del names[s.fileno()]
                         del buf[s.fileno()]
                         s.close()
-
-                        #print (s.fileno())
         except Exception as e:
             print("Other exception")
             print(e)
